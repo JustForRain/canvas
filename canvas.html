@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>canvas</title>
+        <style>
+            *{margin: 0;padding:0;}
+            body{overflow: hidden;background-color: #4f4f4f}
+        </style>
+    </head>
+    <body>
+        <div style="position:absolute; left:0px; top:0px">
+            <h1>这是一个canvas特效</h1>
+        </div>
+        <canvas></canvas>
+        <script>
+            //获取canvas节点
+            var canvas=document.querySelector('canvas');
+            var ctx=canvas.getContext('2d');
+            var COLORS = ['#69d2e7','#a7dbd8','#e0e4cc','#f38630','#fa6900','#ff4e50','#f9d423'];
+            //获取浏览器高度 宽度
+            var wH=window.innerHeight;
+            var wW=window.innerWidth;
+            //粒子对象初始化
+            var particles=[];
+            //初始化定时器
+            var timer=null;
+            init();
+            function init(){//初始化函数
+                //设置canvas的宽度高度与浏览器相同
+                canvas.width=wW;
+                canvas.height=wH;
+                render();                
+            }
+            //创建一个小球母本 Particle
+            function Particle(opt){//构造函数 类
+              this.init(opt);
+            }
+            //var newParticle=new Particle(100,100,100);
+            Particle.prototype={//原型方法
+                init:function(opt){//粒子初始化行为
+                    //参数接受
+                    this.x=opt.x||0;//圆心 x
+                    this.y=opt.y||0;//圆心 y
+                    this.radius=random(0,30);//圆半径
+                    this.color=random(COLORS);//颜色
+                    this.force=random(0,100);//随机扩散半径
+                    this.theta=random(0,Math.PI*2)//随机弧度
+                    this.vx=Math.cos(this.theta) * this.force;//角动量x
+                    this.vy=Math.sin(this.theta) * this.force;//角动量y
+                },
+                upData:function(){
+                    //粒子运动轨迹
+                    this.x +=this.vx;
+                    this.y +=this.vy;
+                    //沿着原先角度向外移动
+                    this.vx=Math.cos(this.theta)*0.1;//角动量x
+                    this.vy=Math.sin(this.theta)*0.1;//角动量y
+                    //摩擦系数
+                    this.vx *=0.92;
+                    this.vy *=0.92;
+                    //变小
+                    this.radius *=0.96;
+                },
+                draw:function(ctx){
+                    ctx.beginPath();
+                    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+                    ctx.fillStyle=this.color;
+                    //两圆重叠 重叠色
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fill();
+                }
+            }
+            //粒子运动 绘制函数
+            function render(){
+                //清空画布
+                ctx.clearRect(0,0,wW,wH);
+                for(var i=0,len=particles.length;i<len;i++){//循环粒子数组
+                    particles[i].draw(ctx);
+                    particles[i].upData();
+                }
+                //帧动画递归
+                requestAnimationFrame(render);
+            }
+            //鼠标移动事件
+            canvas.onmousemove=function(e){
+                //获取鼠标在页面上的位置 x y
+                var eX=e.pageX;
+                var eY=e.pageY;
+                for(var i=0;i<random(1,10);i++){
+                    spawn(eX,eY);
+                }
+            }
+            //孵化器 专门用来实例化粒子对象 模块化开发
+            function spawn(eX,eY){
+                var particle =new Particle({x:eX,y:eY});                
+                particles.push(particle);//后入
+                if(particles.length>=800){//控制粒子数量
+                    particles.shift();//前删
+                }
+            }
+            //随机数封装 最小值 最大值
+            function random(min,max){
+                //又要处理数组 又要处理数字
+                if(min.sort){
+                    //如果是数组 如果他有sort那它就是数组
+                    return min[~~(+Math.random()*min.length)];
+                }else{
+                    //
+                    //调用接口
+                    //return Math.floor(+Math.random()*(max-min));
+                    //算法取整
+                    return ~~(+Math.random()*(max-min));
+                }
+            }
+        </script>
+    </body>
+</html>
